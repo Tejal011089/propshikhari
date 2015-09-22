@@ -210,6 +210,9 @@
   "property_owner":{
     "is_mandatory": false,
     "field_type": "string"
+  },
+  "possession_status":{
+    "is_mandatory": false,
+    "field_type": "string"
   }
-
 }

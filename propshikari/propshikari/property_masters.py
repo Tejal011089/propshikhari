@@ -156,21 +156,28 @@ def shortlist_property(request_data):
 		email = putil.validate_for_user_id_exists(request_data.get("user_id"))
 		if not request_data.get("property_id"):
 			raise MandatoryError("Mandatory Field Property Id missing")
-		if frappe.db.get_value("Shortlisted Property", {"property_id":request_data.get("property_id"), "user_id":request_data.get("user_id")} ,"name"):	
-			raise DuplicateEntryError("Property {0} already Shortlisted".format(request_data.get("property_id")))
-		try:
-			sp_doc = frappe.new_doc("Shortlisted Property")
-			sp_doc.user_id = request_data.get("user_id")
-			sp_doc.property_id = request_data.get("property_id")
-			sp_doc.status = "Active"
-			sp_doc.save()
-			return {"operation":"Create", "message":"Property Shortlisted" ,"property_id":request_data.get("property_id"), "user_id":request_data.get("user_id")}
-		except frappe.MandatoryError,e:
-			raise MandatoryError("Mandatory Field {0} missing".format(e.message))
-		except (frappe.LinkValidationError, frappe.ValidationError)  as e:
-			raise InvalidDataError(e.message)
-		except Exception,e:
-			raise OperationFailed("Shortlist Property Operation Failed")
+		property_name = frappe.db.get_value("Shortlisted Property", {"property_id":request_data.get("property_id"), "user_id":request_data.get("user_id")} ,["name","status"], as_dict=1)
+		if property_name:
+			if property_name.get("status") == 'Active':	
+				raise DuplicateEntryError("Property {0} already Shortlisted".format(request_data.get("property_id")))
+			elif property_name.get("status") == 'Inactive':
+				sp_doc = frappe.get_doc("Shortlisted Property", property_name.get("name"))
+				sp_doc.status = "Active"
+				sp_doc.save(ignore_permissions=True)
+		else:
+			try:
+				sp_doc = frappe.new_doc("Shortlisted Property")
+				sp_doc.user_id = request_data.get("user_id")
+				sp_doc.property_id = request_data.get("property_id")
+				sp_doc.status = "Active"
+				sp_doc.save()
+			except frappe.MandatoryError,e:
+				raise MandatoryError("Mandatory Field {0} missing".format(e.message))
+			except (frappe.LinkValidationError, frappe.ValidationError)  as e:
+				raise InvalidDataError(e.message)
+			except Exception,e:
+				raise OperationFailed("Shortlist Property Operation Failed")
+		return {"operation":"Create", "message":"Property Shortlisted" ,"property_id":request_data.get("property_id"), "user_id":request_data.get("user_id")}		
 
 
 

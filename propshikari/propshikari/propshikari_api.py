@@ -14,6 +14,8 @@ from PIL import Image
 import os
 import base64
 import elasticsearch
+from elasticsearch import Elasticsearch
+from elasticsearch import helpers
 import math
 from api_handler.api_handler.exceptions import *
 
@@ -39,8 +41,8 @@ def post_property(data):
 			data["posted_by"] = old_data.get("user_id")
 			data["user_email"] = email
 			data["posting_date"] = data.get("posting_date") if data.get("posting_date") else data["creation_date"]
-			data["amenities"] = putil.prepare_amenities_data(data.get("amenities"))
-			data["flat_facilities"] = putil.prepare_amenities_data(data.get("flat_facilities"))
+			data["amenities"] = putil.prepare_amenities_data(data.get("amenities",""), data.get("property_type"))
+			data["flat_facilities"] = putil.prepare_flat_facilities_data(data.get("flat_facilities",""), data.get("property_type"))
 			data["possession_status"] = "Immediate" if data.get("possession") else data.get("possession_date")
 			data.pop("possession_date", None)
 			es = ElasticSearchController()
@@ -520,7 +522,19 @@ def get_alerts(request_data):
 		except elasticsearch.ElasticsearchException,e:
 			raise ElasticSearchException(e.error)
 		except Exception,e:
-			raise e					
+			raise e
+
+
+
+
+def reindex_data(data):
+	try:
+		request_data = json.loads(data)
+		es = Elasticsearch()
+		helpers.reindex(client=es, source_index=request_data.get("source"), target_index=request_data.get("target"))
+		return {"data":"sucess"}
+	except elasticsearch.ElasticsearchException,e:
+		return {"new":dir(e),"mes":e.message, "error":e.errors}									
 
 
 

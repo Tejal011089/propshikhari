@@ -151,7 +151,6 @@ def get_user_profile(data):
 		user_data["location"] = frappe.db.get_value("Area",user_data["area"],"area") or ""
 		return {"operation":"Search", "message":"Profile Found", "data":user_data, "user_id":request_data.get("user_id")}	
 	except Exception,e:
-		print frappe.get_traceback()
 		raise GetUserProfileOperationFailed("User Profile Operation failed")	
 
 

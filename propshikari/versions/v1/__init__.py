@@ -175,7 +175,12 @@ def remove_shortlisted_property(data):
 
 @frappe.whitelist()
 def validate_session(data):
-	return usr.validate_for_session_exists(data)					
+	return usr.validate_for_session_exists(data)
+
+
+@frappe.whitelist(allow_guest=True)
+def reindex_data(data):
+	return api.reindex_data(data)						
 
 
 

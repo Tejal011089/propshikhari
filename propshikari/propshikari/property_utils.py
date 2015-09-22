@@ -35,6 +35,7 @@ def generate_search_query(property_data):
 	property_field_dict = {"operation":"operation", "property_type":"property_type", "property_subtype":"property_subtype", "location":"location", "property_subtype_option":"property_subtype_option", "city":"city"}
 	must_clause_list = [ {"match":{ property_field : property_data.get(request_field) } } for request_field,property_field in property_field_dict.items() if property_data.get(request_field,False)]
 	must_clause_list.append({"match":{ "status": "Active" } })
+	
 	range_field_dict = { "carpet_area":["min_area", "max_area"], "price" :["min_budget", "max_budget"] }
 	range_dict = {}
 	for key,value in range_field_dict.items():
@@ -164,15 +165,28 @@ def get_subscriptions(user):
 
 
 
-def prepare_amenities_data(amenities_data):
+def prepare_amenities_data(amenities_data, property_type):
 	amenities = []
-	for amenity in amenities_data:
+	amenity_list = frappe.db.sql(" select ifnull(amenity_name,'') as name ,ifnull(icon,'') as image  from `tabAmenities` where property_type='{0}' ".format(property_type),as_dict=True)
+	for amenity in amenity_list:
 		amenity_dict = {}
-		amenity_dict["status"] = "Yes"
-		amenity_dict["name"] = amenity
-		amenity_dict["image"] = ""
+		amenity_dict["status"] = "Yes" if amenity.get("name") in amenities_data else "No"
+		amenity_dict["name"] = amenity.get("name")
+		amenity_dict["image"] = amenity.get("image")
 		amenities.append(amenity_dict)
-	return amenities	 
+	return amenities
+
+
+def prepare_flat_facilities_data(facility_data, property_type):
+	flat_facilities = []
+	flat_facilities_list = frappe.db.sql(" select ifnull(facility,'') as name ,ifnull(icon,'') as image  from `tabFlat Facilities` where property_type='{0}' ".format(property_type),as_dict=True)
+	for flat_facility in flat_facilities_list:
+		facility_dict = {}
+		facility_dict["status"] = "Yes" if flat_facility.get("name") in facility_data else "No"
+		facility_dict["name"] = flat_facility.get("name")
+		facility_dict["image"] = flat_facility.get("image")
+		flat_facilities.append(facility_dict)
+	return flat_facilities
 
 
 def get_date_diff_from_posting(response_data):
